@@ -1,0 +1,21 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Abstractions\**" />
+    <EmbeddedResource Remove="Abstractions\**" />
+    <None Remove="Abstractions\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Joseco.DDD.Core" Version="1.0.2" Condition="!Exists('$(MSBuildThisFileDirectory)..\..\..\..\Utils\Joseco.App.Core\src\Joseco.DDD.Core\Joseco.DDD.Core.csproj')" />
+    <ProjectReference Include="$(MSBuildThisFileDirectory)..\..\..\..\Utils\Joseco.App.Core\src\Joseco.DDD.Core\Joseco.DDD.Core.csproj" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\..\Utils\Joseco.App.Core\src\Joseco.DDD.Core\Joseco.DDD.Core.csproj')" />
+    
+  </ItemGroup>
+
+</Project>

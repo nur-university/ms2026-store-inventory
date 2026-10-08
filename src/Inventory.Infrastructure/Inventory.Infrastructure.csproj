@@ -1,0 +1,64 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="RabbitMQ\Consumers\OrderStartedConsumer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    
+    <ProjectReference Include="..\Inventory.Application\Inventory.Application.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Joseco.Communication.External.RabbitMQ" Version="1.0.2" Condition="!Exists('$(MSBuildThisFileDirectory)..\..\..\..\Utils\Joseco.Communication\Joseco.Communication.External.RabbitMQ\Joseco.Communication.External.RabbitMQ.csproj')" />
+    <ProjectReference Include="$(MSBuildThisFileDirectory)..\..\..\..\Utils\Joseco.Communication\Joseco.Communication.External.RabbitMQ\Joseco.Communication.External.RabbitMQ.csproj" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\..\Utils\Joseco.Communication\Joseco.Communication.External.RabbitMQ\Joseco.Communication.External.RabbitMQ.csproj')" />
+    <PackageReference Include="Joseco.Outbox.EFCore" Version="1.0.4" Condition="!Exists('$(MSBuildThisFileDirectory)..\..\..\..\Utils\Joseco.Outbox\Joseco.Outbox.EFCore\Joseco.Outbox.EFCore.csproj')" />
+    <ProjectReference Include="$(MSBuildThisFileDirectory)..\..\..\..\Utils\Joseco.Outbox\Joseco.Outbox.EFCore\Joseco.Outbox.EFCore.csproj" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\..\Utils\Joseco.Outbox\Joseco.Outbox.EFCore\Joseco.Outbox.EFCore.csproj')" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="9.0.3" />
+    <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="9.0.0" />
+
+
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.4" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.4" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.4">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
+    <PackageReference Include="Npgsql.OpenTelemetry" Version="9.0.3" />
+
+    
+    <PackageReference Include="Joseco.Secrets.HashicorpVault" Version="1.0.0" Condition="!Exists('$(MSBuildThisFileDirectory)..\..\..\..\Utils\Joseco.Secrets\src\Joseco.Secrets.HashicorpVault\Joseco.Secrets.HashicorpVault.csproj')" />
+    <ProjectReference Include="$(MSBuildThisFileDirectory)..\..\..\..\Utils\Joseco.Secrets\src\Joseco.Secrets.HashicorpVault\Joseco.Secrets.HashicorpVault.csproj" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\..\Utils\Joseco.Secrets\src\Joseco.Secrets.HashicorpVault\Joseco.Secrets.HashicorpVault.csproj')" />
+
+    <PackageReference Include="Nur.Store2025.Observability" Version="1.0.0" Condition="!Exists('$(MSBuildThisFileDirectory)..\..\..\..\SharedKernel\Nur.Store2026.Observability\src\Nur.Store2026.Observability\Nur.Store2026.Observability.csproj')" />
+    <ProjectReference Include="$(MSBuildThisFileDirectory)..\..\..\..\SharedKernel\Nur.Store2026.Observability\src\Nur.Store2026.Observability\Nur.Store2026.Observability.csproj" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\..\SharedKernel\Nur.Store2026.Observability\src\Nur.Store2026.Observability\Nur.Store2026.Observability.csproj')" />
+    <PackageReference Include="Nur.Store2025.Security" Version="1.0.0" Condition="!Exists('$(MSBuildThisFileDirectory)..\..\..\..\SharedKernel\Nur.Store2026.Security\src\Nur.Store2026.Security\Nur.Store2026.Security.csproj')" />
+    <ProjectReference Include="$(MSBuildThisFileDirectory)..\..\..\..\SharedKernel\Nur.Store2026.Security\src\Nur.Store2026.Security\Nur.Store2026.Security.csproj" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\..\SharedKernel\Nur.Store2026.Security\src\Nur.Store2026.Security\Nur.Store2026.Security.csproj')" />
+    <PackageReference Include="Nur.Store2025.Access.Inventory" Version="1.0.0" Condition="!Exists('$(MSBuildThisFileDirectory)..\..\..\..\SharedKernel\Nur.Store2026.Access\src\Nur.Store2026.Access.Inventory\Nur.Store2026.Access.Inventory.csproj')" />
+    <ProjectReference Include="$(MSBuildThisFileDirectory)..\..\..\..\SharedKernel\Nur.Store2026.Access\src\Nur.Store2026.Access.Inventory\Nur.Store2026.Access.Inventory.csproj" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\..\SharedKernel\Nur.Store2026.Access\src\Nur.Store2026.Access.Inventory\Nur.Store2026.Access.Inventory.csproj')" />
+    
+    <PackageReference Include="Scrutor" Version="6.0.1" />
+
+    <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
+    <PackageReference Include="Serilog.Enrichers.Environment" Version="3.0.1" />
+    <PackageReference Include="Serilog.Enrichers.Process" Version="3.0.0" />
+    <PackageReference Include="Serilog.Enrichers.Span" Version="3.1.0" />
+    <PackageReference Include="Serilog.Extensions.Hosting" Version="9.0.0" />
+    <PackageReference Include="Serilog.Settings.Configuration" Version="9.0.0" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
+    <PackageReference Include="Serilog.Sinks.Seq" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Migrations\" />
+  </ItemGroup>
+
+</Project>
