@@ -1,4 +1,4 @@
-﻿using Inventory.Application.Items.EventHanders;
+using Inventory.Application.Items.EventHanders;
 using Inventory.Domain.Items;
 using Inventory.Domain.Transactions;
 using Inventory.Domain.Transactions.Events;
@@ -44,8 +44,10 @@ namespace Inventory.Test.Application.Items.EventHandlers
             await eventHandler.Handle(transactionCompleted, tcs.Token);
 
             // Assert
-            _itemRepository.Verify(x => x.UpdateAsync(It.IsAny<Item>()), Times.Once);
-            _unitOfWork.Verify(x => x.CommitAsync(tcs.Token), Times.Once);
+            // The handler only changes the tracked entities; the UnitOfWork is the one that saves.
+            Assert.Equal(10, (int)item1.Stock);
+            Assert.Equal(10, (int)item1.Available);
+            _unitOfWork.Verify(x => x.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
         }
         [Fact]
         public async Task HandleIsValidWithMultipleItems()
@@ -77,8 +79,9 @@ namespace Inventory.Test.Application.Items.EventHandlers
             await eventHandler.Handle(transactionCompleted, tcs.Token);
 
             // Assert
-            _itemRepository.Verify(x => x.UpdateAsync(It.IsAny<Item>()), Times.Exactly(2));
-            _unitOfWork.Verify(x => x.CommitAsync(tcs.Token), Times.Once);
+            Assert.Equal(10, (int)item1.Stock);
+            Assert.Equal(20, (int)item2.Stock);
+            _unitOfWork.Verify(x => x.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
         }
         [Fact]
         public async Task HandleIsEmptyWithNull()
@@ -103,8 +106,9 @@ namespace Inventory.Test.Application.Items.EventHandlers
             await eventHandler.Handle(transactionCompleted, tcs.Token);
 
             // Assert
-            _itemRepository.Verify(x => x.UpdateAsync(It.IsAny<Item>()), Times.Never);
-            _unitOfWork.Verify(x => x.CommitAsync(tcs.Token), Times.Once);
+            // Unknown items are skipped without failing.
+            _itemRepository.Verify(x => x.GetByIdAsync(itemId1, false), Times.Once);
+            _unitOfWork.Verify(x => x.CommitAsync(It.IsAny<CancellationToken>()), Times.Never);
         }
     }
 }
