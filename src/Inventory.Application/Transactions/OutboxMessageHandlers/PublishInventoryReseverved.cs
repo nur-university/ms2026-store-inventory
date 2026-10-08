@@ -1,4 +1,4 @@
-﻿using Inventory.Domain.Transactions.Events;
+using Inventory.Domain.Transactions.Events;
 using Joseco.Communication.External.Contracts.Services;
 using Joseco.Outbox.Contracts.Model;
 using MediatR;
@@ -18,6 +18,7 @@ internal class PublishInventoryReseverved : INotificationHandler<OutboxMessage<T
 
         InventoryReserved message = new InventoryReserved()
         {
+            Id = conent.Id,
             SourceId = conent.SourceId,
             SourceType = conent.SourceType
         };

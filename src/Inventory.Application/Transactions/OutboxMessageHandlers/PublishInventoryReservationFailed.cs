@@ -20,6 +20,7 @@ internal class PublishInventoryReservationFailed :INotificationHandler<OutboxMes
 
         InventoryReservationFailed inventoryReservationFailed = new()
         {
+            Id = domainEvent.Id,
             OrderId = domainEvent.OrderId,
             Reason = domainEvent.Reason
         };

@@ -1,6 +1,7 @@
 using Inventory.Domain.Items;
 using Inventory.Domain.Transactions.Events;
 using Joseco.DDD.Core.Abstractions;
+using Joseco.DDD.Core.Results;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -18,7 +19,7 @@ public class ReserveItemWhenTransactionItemReserved(IItemRepository itemReposito
         Item? item = await itemRepository.GetByIdAsync(notification.ItemId);
         if (item == null)
         {
-            return;
+            throw new DomainException(ItemErros.ItemNotFound(notification.ItemId));
         }
         item.ReserveStock(notification.Quantity);
     }

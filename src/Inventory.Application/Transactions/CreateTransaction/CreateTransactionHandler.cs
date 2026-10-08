@@ -1,4 +1,4 @@
-﻿using Inventory.Domain.Items;
+using Inventory.Domain.Items;
 using Inventory.Domain.Transactions;
 using Inventory.Domain.Transactions.Exceptions;
 using MediatR;
@@ -76,6 +76,13 @@ public class CreateTransactionHandler : IRequestHandler<CreateTransactionCommand
     public async Task HandleAsync(OrderStarted message, CancellationToken cancellationToken) {
         List<CreateTransacionItemCommand> items = message.Items.Select(i => new CreateTransacionItemCommand(i.ProductId, i.Quantity, 0)).ToList();
 
+        // A duplicated OrderStarted must not reserve the stock twice.
+        if (await _transactionRepository.GetBySourceAsync(message.OrderId, "orders") != null)
+        {
+            _logger.LogInformation("Stock for order {OrderId} was already reserved; ignoring OrderStarted", message.OrderId);
+            return;
+        }
+
         string? reason = null;
         try
         {
@@ -95,11 +102,13 @@ public class CreateTransactionHandler : IRequestHandler<CreateTransactionCommand
             var error = ex.Error;
             reason = $"{error.Code}: {error.Description}";
         }
-        catch (Exception ex)
+        catch (TransactionCreationException ex)
         {
             _logger.LogError(ex, "Error processing OrderStarted message: {Message}", ex.Message);
             reason = ex.Message;
         }
+        // Anything else (database down, concurrency conflict, ...) is not a business rejection: it propagates so the
+        // message is retried and, if it keeps failing, ends up in the error queue instead of failing the order.
 
         if (!string.IsNullOrEmpty(reason))
         {

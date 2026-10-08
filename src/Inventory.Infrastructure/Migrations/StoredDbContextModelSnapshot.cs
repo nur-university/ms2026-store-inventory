@@ -22,6 +22,26 @@ namespace Inventory.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Inventory.Infrastructure.Inbox.InboxMessage", b =>
+                {
+                    b.Property<Guid>("MessageId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("messageId");
+
+                    b.Property<string>("Consumer")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("consumer");
+
+                    b.Property<DateTime>("ProcessedOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("processedOn");
+
+                    b.HasKey("MessageId", "Consumer");
+
+                    b.ToTable("inboxMessage", (string)null);
+                });
+
             modelBuilder.Entity("Inventory.Infrastructure.Persistence.StoredModel.Entities.ItemStoredModel", b =>
                 {
                     b.Property<Guid>("Id")
@@ -143,6 +163,10 @@ namespace Inventory.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("UserCreatorId");
+
+                    b.HasIndex("SourceId", "SourceType")
+                        .IsUnique()
+                        .HasFilter("\"sourceId\" IS NOT NULL");
 
                     b.ToTable("transaction");
                 });

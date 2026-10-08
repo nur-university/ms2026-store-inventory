@@ -1,4 +1,5 @@
-﻿using Inventory.Infrastructure.Persistence.StoredModel.Entities;
+using Inventory.Infrastructure.Inbox;
+using Inventory.Infrastructure.Persistence.StoredModel.Entities;
 using Joseco.DDD.Core.Abstractions;
 using Joseco.Outbox.EFCore.Persistence;
 using Microsoft.EntityFrameworkCore;
@@ -25,6 +26,13 @@ namespace Inventory.Infrastructure.Persistence.StoredModel
         {
             base.OnModelCreating(modelBuilder);
             modelBuilder.AddOutboxModel<DomainEvent>();
+            modelBuilder.AddInboxModel();
+
+            // One reservation per originating order (exit transactions created by hand have no source).
+            modelBuilder.Entity<TransactionStoredModel>()
+                .HasIndex(t => new { t.SourceId, t.SourceType })
+                .IsUnique()
+                .HasFilter("\"sourceId\" IS NOT NULL");
         }
 
         public void Migrate()

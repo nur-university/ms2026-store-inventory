@@ -1,4 +1,4 @@
-﻿using Joseco.DDD.Core.Results;
+using Joseco.DDD.Core.Results;
 
 namespace Inventory.Domain.Items;
 
@@ -13,6 +13,9 @@ public static class ItemErros
     {
         return new Error("InsuficentStockToReserve", "The available stock is {availableStock}, it cannot reserve {requestedStock}", ErrorType.Validation, availableStock, requestedStock);
     }
+
+    public static Error ItemNotFound(Guid itemId) =>
+        new Error("ItemNotFound", $"The item {itemId} does not exist", ErrorType.NotFound);
 
     public static Error NonNegativeStock() =>
         new Error("NonNegativeStock", "The value for cannot be negative", ErrorType.Validation);
