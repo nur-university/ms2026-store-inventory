@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Inventory.Infrastructure.Persistence.StoredModel.Entities;
@@ -47,6 +47,13 @@ internal class TransactionStoredModel
 
     [Column("sourceId")]
     public Guid? SourceId { get; set; }
+
+    [Column("releasedOn")]
+    public DateTime? ReleasedOn { get; set; }
+
+    [Column("invoiceNumber")]
+    [MaxLength(20)]
+    public string? InvoiceNumber { get; set; }
 
 
     public List<TransactionItemStoredModel> Items { get; set; }

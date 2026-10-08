@@ -1,5 +1,5 @@
 using Inventory.Application.Transactions.CancelTransaction;
-using Inventory.Application.Transactions.CompleteTransaction;
+using Inventory.Application.Transactions.ReleaseTransaction;
 using Inventory.Application.Transactions.CreateTransaction;
 using Inventory.Infrastructure.Observability;
 using Inventory.Infrastructure.RabbitMQ.Consumers;
@@ -36,7 +36,7 @@ public static class BrokerExtensions
             .AddRabbitMqConsumer<ProductCreated, ProductCreatedConsumer>("inventory-product-created")
             .AddRabbitMqConsumer<UserCreated, UserCreatedConsumer>("inventory-user-created")
             .AddRabbitMqConsumer<OrderStarted, CreateTransactionHandler>("inventory-order-started")
-            .AddRabbitMqConsumer<OrderPaid, CompleteTransactionWhenOrderPaid>("inventory-order-paid")
+            .AddRabbitMqConsumer<OrderPaid, ReleaseTransactionWhenOrderPaid>("inventory-order-paid")
             .AddRabbitMqConsumer<OrderStockReleaseRequested, CancelTransactionWhenOrderStockReleaseRequested>("inventory-order-stock-release-requested");
 
         services.Decorate<IIntegrationMessageConsumer<ProductCreated>, IdempotentConsumer<ProductCreated>>();

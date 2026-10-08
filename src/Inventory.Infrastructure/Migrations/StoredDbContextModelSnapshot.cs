@@ -131,6 +131,15 @@ namespace Inventory.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("creationDate");
 
+                    b.Property<string>("InvoiceNumber")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("invoiceNumber");
+
+                    b.Property<DateTime?>("ReleasedOn")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("releasedOn");
+
                     b.Property<Guid?>("SourceId")
                         .HasColumnType("uuid")
                         .HasColumnName("sourceId");

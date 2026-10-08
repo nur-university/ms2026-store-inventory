@@ -4,19 +4,20 @@ using Joseco.DDD.Core.Abstractions;
 using Microsoft.Extensions.Logging;
 using Nur.Store2026.Integration.Orders;
 
-namespace Inventory.Application.Transactions.CompleteTransaction;
+namespace Inventory.Application.Transactions.ReleaseTransaction;
 
 /// <summary>
-/// Saga step: the order was paid, so the stock reserved for it is confirmed (deducted).
+/// Saga step: the sale was paid and invoiced, so its reservation may be handed over. The stock stays reserved
+/// until the customer picks the goods up at the warehouse (<see cref="DeliverOrder.DeliverOrderCommand"/>).
 /// </summary>
-public class CompleteTransactionWhenOrderPaid : IIntegrationMessageConsumer<OrderPaid>
+public class ReleaseTransactionWhenOrderPaid : IIntegrationMessageConsumer<OrderPaid>
 {
     private readonly ITransactionRepository _transactionRepository;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ILogger<CompleteTransactionWhenOrderPaid> _logger;
+    private readonly ILogger<ReleaseTransactionWhenOrderPaid> _logger;
 
-    public CompleteTransactionWhenOrderPaid(ITransactionRepository transactionRepository, IUnitOfWork unitOfWork,
-        ILogger<CompleteTransactionWhenOrderPaid> logger)
+    public ReleaseTransactionWhenOrderPaid(ITransactionRepository transactionRepository, IUnitOfWork unitOfWork,
+        ILogger<ReleaseTransactionWhenOrderPaid> logger)
     {
         _transactionRepository = transactionRepository;
         _unitOfWork = unitOfWork;
@@ -34,10 +35,10 @@ public class CompleteTransactionWhenOrderPaid : IIntegrationMessageConsumer<Orde
 
         if (transaction.Status != TransactionStatus.Created)
         {
-            return; // duplicated message, or the reservation was already released
+            return; // already delivered, or the reservation was released
         }
 
-        transaction.Complete();
+        transaction.Release(message.InvoiceNumber);
 
         await _unitOfWork.CommitAsync(cancellationToken);
     }

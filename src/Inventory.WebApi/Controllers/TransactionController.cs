@@ -1,4 +1,6 @@
-﻿using Inventory.Application.Transactions.CompleteTransaction;
+using Inventory.Application.Transactions.CompleteTransaction;
+using Inventory.Application.Transactions.DeliverOrder;
+using Joseco.DDD.Core.Results;
 using Inventory.Application.Transactions.CreateTransaction;
 using Inventory.Application.Transactions.GetTransaccionById;
 using MediatR;
@@ -49,6 +51,28 @@ public class TransactionController : ControllerBase
         {
             return StatusCode(500);
         }
+    }
+
+    /// <summary>The customer picks up the goods of a paid sale: the exit is completed and the stock is deducted.</summary>
+    [HttpPost]
+    [Route("orders/{orderId:guid}/deliver")]
+    [Authorize(Policy = InventoryPermission.TransactionDeliver)]
+    public async Task<IActionResult> DeliverOrder([FromRoute] Guid orderId)
+    {
+        var result = await _mediator.Send(new DeliverOrderCommand(orderId));
+        if (result.IsSuccess)
+        {
+            return Ok(result.Value);
+        }
+
+        int status = result.Error.Type switch
+        {
+            ErrorType.NotFound => StatusCodes.Status404NotFound,
+            ErrorType.Conflict => StatusCodes.Status409Conflict,
+            ErrorType.Validation => StatusCodes.Status400BadRequest,
+            _ => StatusCodes.Status500InternalServerError
+        };
+        return StatusCode(status, new ProblemDetails { Status = status, Title = result.Error.Code, Detail = result.Error.Description });
     }
 
     [HttpGet]

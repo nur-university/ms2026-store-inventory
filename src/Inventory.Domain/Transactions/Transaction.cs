@@ -1,5 +1,6 @@
-﻿using Inventory.Domain.Shared;
+using Inventory.Domain.Shared;
 using Inventory.Domain.Transactions.Events;
+using Joseco.DDD.Core.Results;
 using Joseco.DDD.Core.Abstractions;
 
 namespace Inventory.Domain.Transactions;
@@ -19,6 +20,12 @@ public class Transaction : AggregateRoot
     public Guid? SourceId { get; private set; }
 
     public string? SourceType { get; set; }
+
+    /// <summary>When the sale this reservation belongs to was paid. Goods can only be delivered once it is set.</summary>
+    public DateTime? ReleasedOn { get; private set; }
+
+    /// <summary>Invoice of the paid sale, shown to the warehouse clerk when the customer picks the goods up.</summary>
+    public string? InvoiceNumber { get; private set; }
     public IReadOnlyCollection<TransactionItem> Items { 
         get {
             return _items;
@@ -54,11 +61,36 @@ public class Transaction : AggregateRoot
         }
     }
 
+    /// <summary>Marks the reservation of a sale as paid, so the warehouse may hand the goods over. Idempotent.</summary>
+    public void Release(string? invoiceNumber)
+    {
+        if (Type != TransactionType.Exit || SourceId == null)
+        {
+            throw new InvalidOperationException("Only an exit transaction that comes from a sale can be released");
+        }
+        if (Status != TransactionStatus.Created)
+        {
+            throw new InvalidOperationException("Cannot release a transaction that is not in Created status");
+        }
+        if (ReleasedOn != null)
+        {
+            return;
+        }
+
+        ReleasedOn = DateTime.UtcNow;
+        InvoiceNumber = invoiceNumber;
+    }
+
     public void Complete()
     {
         if (Status != TransactionStatus.Created)
         {
             throw new InvalidOperationException("Cannot complete a transaction that is not in Created status");
+        }
+        // Goods of a sale leave the warehouse only after the sale was paid at the cashier.
+        if (SourceId.HasValue && ReleasedOn == null)
+        {
+            throw new DomainException(TransactionErrors.NotReleased(Id));
         }
         if(_items.Count == 0)
         {
@@ -72,6 +104,11 @@ public class Transaction : AggregateRoot
             .ToList();
 
         AddDomainEvent(new TransactionCompleted(Id, Type, detail));
+
+        if (SourceId.HasValue)
+        {
+            AddDomainEvent(new TransactionDelivered { TransactionId = Id, SourceId = SourceId.Value, SourceType = SourceType ?? string.Empty });
+        }
     }
 
     public void Cancel()

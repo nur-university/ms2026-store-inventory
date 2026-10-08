@@ -70,6 +70,13 @@ namespace Inventory.Infrastructure.Persistence.DomainModel.Config
             builder.Property(x => x.SourceId)
                 .HasColumnName("sourceId");
 
+            builder.Property(x => x.ReleasedOn)
+                .HasColumnName("releasedOn");
+
+            builder.Property(x => x.InvoiceNumber)
+                .HasColumnName("invoiceNumber")
+                .HasMaxLength(20);
+
             builder.HasMany(typeof(TransactionItem), "_items");
 
             builder.Ignore("_domainEvents");

@@ -21,4 +21,8 @@
     <ProjectReference Include="..\Inventory.Domain\Inventory.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Inventory.Test" />
+  </ItemGroup>
+
 </Project>
