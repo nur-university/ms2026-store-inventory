@@ -1,4 +1,4 @@
-﻿using Inventory.Domain.Shared;
+using Inventory.Domain.Shared;
 using Inventory.Domain.Transactions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -75,8 +75,6 @@ namespace Inventory.Infrastructure.Persistence.DomainModel.Config
             builder.Ignore("_domainEvents");
             builder.Ignore(x => x.DomainEvents);
             builder.Ignore(x => x.Items);
-            builder.Ignore(x => x.SourceId);
-            builder.Ignore(x => x.SourceType);
         }
 
         public void Configure(EntityTypeBuilder<TransactionItem> builder)

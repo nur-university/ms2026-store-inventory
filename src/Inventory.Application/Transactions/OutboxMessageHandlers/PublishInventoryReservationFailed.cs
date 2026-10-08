@@ -1,4 +1,4 @@
-﻿using Inventory.Domain.Transactions.Events;
+using Inventory.Domain.Transactions.Events;
 using Joseco.Communication.External.Contracts.Services;
 using Joseco.Outbox.Contracts.Model;
 using MediatR;
@@ -23,8 +23,9 @@ internal class PublishInventoryReservationFailed :INotificationHandler<OutboxMes
             OrderId = domainEvent.OrderId,
             Reason = domainEvent.Reason
         };
-        //inventory-reservation-failed
 
-        await _publisher.PublishAsync(inventoryReservationFailed, "inventory-reservation-failed", true);
+        // The exchange (inventory-reservation-failed) is declared in rabbitmq/definitions.json; redeclaring it
+        // here with different arguments is rejected by the broker (PRECONDITION_FAILED).
+        await _publisher.PublishAsync(inventoryReservationFailed);
     }
 }
