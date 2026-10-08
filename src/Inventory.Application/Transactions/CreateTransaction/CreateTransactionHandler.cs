@@ -1,6 +1,7 @@
 using Inventory.Domain.Items;
 using Inventory.Domain.Transactions;
 using Inventory.Domain.Transactions.Exceptions;
+using Inventory.Domain.Users;
 using MediatR;
 using Joseco.DDD.Core.Abstractions;
 using Joseco.Communication.External.Contracts.Services;
@@ -20,6 +21,9 @@ public class CreateTransactionHandler : IRequestHandler<CreateTransactionCommand
     private readonly ITransactionRepository _transactionRepository;
     private readonly IItemRepository _itemRepository;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IUserRepository _userRepository;
+    // Creator used when the order carries no user, or a user inventory does not know yet.
+    private static readonly Guid SystemUserId = new("3fa85f64-5717-4562-b3fc-2c963f66afa6");
     private readonly IOutboxService<DomainEvent> _outboxService;
     private readonly ILogger<CreateTransactionHandler> _logger;
 
@@ -28,7 +32,9 @@ public class CreateTransactionHandler : IRequestHandler<CreateTransactionCommand
         IUnitOfWork unitOfWork,
         IItemRepository itemRepository,
         ILogger<CreateTransactionHandler> logger,
-        IOutboxService<DomainEvent> outboxService) {
+        IOutboxService<DomainEvent> outboxService,
+        IUserRepository userRepository) {
+        _userRepository = userRepository;
         _transactionFactory = transactionFactory;
         _transactionRepository = transactionRepository;
         _unitOfWork = unitOfWork;
@@ -88,7 +94,9 @@ public class CreateTransactionHandler : IRequestHandler<CreateTransactionCommand
         {
             _logger.LogInformation("Consuming OrderStarted message");
 
-            CreateTransactionCommand command = new(new Guid("3fa85f64-5717-4562-b3fc-2c963f66afa6"),
+            Guid creatorId = await ResolveCreatorAsync(message.UserId);
+
+            CreateTransactionCommand command = new(creatorId,
                 "Exit",
                 items,
                 message.OrderId,
@@ -120,5 +128,20 @@ public class CreateTransactionHandler : IRequestHandler<CreateTransactionCommand
             await _outboxService.AddAsync(outboxMessage);
             await _unitOfWork.CommitAsync(cancellationToken);
         }
+    }
+
+    private async Task<Guid> ResolveCreatorAsync(Guid? userId)
+    {
+        if (userId.HasValue && await _userRepository.GetByIdAsync(userId.Value, true) != null)
+        {
+            return userId.Value;
+        }
+
+        if (userId.HasValue)
+        {
+            _logger.LogWarning("User {UserId} is not known by inventory yet; using the system user as creator", userId);
+        }
+
+        return SystemUserId;
     }
 }
