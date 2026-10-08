@@ -1,4 +1,4 @@
-﻿using Inventory.Domain.Transactions;
+using Inventory.Domain.Transactions;
 using Inventory.Infrastructure.Persistence.DomainModel;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -40,6 +40,12 @@ namespace Inventory.Infrastructure.Persistence.Repositories
             {
                 return await _dbContext.Transaction.Include("_items").SingleOrDefaultAsync(i => i.Id == id);
             }
+        }
+
+        public Task<Transaction?> GetBySourceAsync(Guid sourceId, string sourceType)
+        {
+            return _dbContext.Transaction.Include("_items")
+                .SingleOrDefaultAsync(t => t.SourceId == sourceId && t.SourceType == sourceType);
         }
 
         public Task UpdateAsync(Transaction transaction)

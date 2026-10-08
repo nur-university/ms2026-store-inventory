@@ -1,4 +1,6 @@
-﻿using Inventory.Application.Transactions.CreateTransaction;
+using Inventory.Application.Transactions.CancelTransaction;
+using Inventory.Application.Transactions.CompleteTransaction;
+using Inventory.Application.Transactions.CreateTransaction;
 using Inventory.Infrastructure.Observability;
 using Inventory.Infrastructure.RabbitMQ.Consumers;
 using Joseco.Communication.External.Contracts.Message;
@@ -32,11 +34,15 @@ public static class BrokerExtensions
         services
             .AddRabbitMqConsumer<ProductCreated, ProductCreatedConsumer>("inventory-product-created")
             .AddRabbitMqConsumer<UserCreated, UserCreatedConsumer>("inventory-user-created")
-            .AddRabbitMqConsumer<OrderStarted, CreateTransactionHandler>("inventory-order-started");
+            .AddRabbitMqConsumer<OrderStarted, CreateTransactionHandler>("inventory-order-started")
+            .AddRabbitMqConsumer<OrderPaid, CompleteTransactionWhenOrderPaid>("inventory-order-paid")
+            .AddRabbitMqConsumer<OrderStockReleaseRequested, CancelTransactionWhenOrderStockReleaseRequested>("inventory-order-stock-release-requested");
 
         services.Decorate<IIntegrationMessageConsumer<ProductCreated>, TracingConsumer<ProductCreated>>();
         services.Decorate<IIntegrationMessageConsumer<UserCreated>, TracingConsumer<UserCreated>>();
         services.Decorate<IIntegrationMessageConsumer<OrderStarted>, TracingConsumer<OrderStarted>>();
+        services.Decorate<IIntegrationMessageConsumer<OrderPaid>, TracingConsumer<OrderPaid>>();
+        services.Decorate<IIntegrationMessageConsumer<OrderStockReleaseRequested>, TracingConsumer<OrderStockReleaseRequested>>();
 
         return services;
     }
