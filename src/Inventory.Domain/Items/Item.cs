@@ -65,7 +65,7 @@ public class Item : AggregateRoot
     {
         if (quantityToReserve > Available)
         {
-            throw new DomainException(ItemErros.InsuficentStockToReserve(Stock, quantityToReserve));
+            throw new DomainException(ItemErros.InsuficentStockToReserve(Available, quantityToReserve));
         }
         Reserved += quantityToReserve;
         Available -= quantityToReserve;
