@@ -1,4 +1,4 @@
-﻿using Inventory.Domain.Items;
+using Inventory.Domain.Items;
 using Inventory.Domain.Transactions.Events;
 using Joseco.DDD.Core.Abstractions;
 using MediatR;
@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Inventory.Application.Items.EventHanders;
 
-public class ReserveItemWhenTransactionItemReserved(IItemRepository itemRepository, IUnitOfWork unitOfWork)
+public class ReserveItemWhenTransactionItemReserved(IItemRepository itemRepository)
     : INotificationHandler<TransactionItemReserved>
 {
     public async Task Handle(TransactionItemReserved notification, CancellationToken cancellationToken)
@@ -21,7 +21,5 @@ public class ReserveItemWhenTransactionItemReserved(IItemRepository itemReposito
             return;
         }
         item.ReserveStock(notification.Quantity);
-
-        //await unitOfWork.CommitAsync(cancellationToken);
     }
 }

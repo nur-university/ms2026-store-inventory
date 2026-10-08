@@ -1,4 +1,4 @@
-﻿using Inventory.Domain.Transactions.Events;
+using Inventory.Domain.Transactions.Events;
 using Joseco.Communication.External.Contracts.Services;
 using Joseco.DDD.Core.Abstractions;
 using Joseco.Outbox.Contracts.Model;
@@ -17,11 +17,9 @@ namespace Inventory.Application.Transactions.EventHandlers;
 internal class SaveToOutboxWhenTransactionReserved : INotificationHandler<TransactionReserved>
 {
     private readonly IOutboxService<DomainEvent> _otuboxService;
-    private readonly IUnitOfWork _unitOfWork;
 
-    public SaveToOutboxWhenTransactionReserved(IOutboxService<DomainEvent> otuboxService, IUnitOfWork unitOfWork) {
+    public SaveToOutboxWhenTransactionReserved(IOutboxService<DomainEvent> otuboxService) {
         _otuboxService = otuboxService;
-        _unitOfWork = unitOfWork;
     }
 
     public async Task Handle(TransactionReserved domainEvent, CancellationToken cancellationToken) {
@@ -29,6 +27,5 @@ internal class SaveToOutboxWhenTransactionReserved : INotificationHandler<Transa
         OutboxMessage<DomainEvent> outboxMessage = new(domainEvent);
 
         await _otuboxService.AddAsync(outboxMessage);
-        //await _unitOfWork.CommitAsync(cancellationToken);
     }
 }
