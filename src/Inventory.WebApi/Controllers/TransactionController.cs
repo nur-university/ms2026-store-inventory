@@ -1,4 +1,4 @@
-using Inventory.Application.Transactions.CompleteTransaction;
+using Inventory.Application.Transactions.ReviewTransaction;
 using Inventory.Application.Transactions.DeliverOrder;
 using Joseco.DDD.Core.Results;
 using Inventory.Application.Transactions.CreateTransaction;
@@ -45,20 +45,41 @@ public class TransactionController : ControllerBase
             : this.ToProblem(result.Error);
     }
 
+    public record ApproveTransactionRequest(Guid TransactionId);
+
+    public record RejectTransactionRequest(Guid TransactionId, string? Reason);
+
+    /// <summary>
+    /// Approves a write-off or opening balance created by hand: the stock is deducted (write-off) or added (opening
+    /// balance). A transaction of a sale is closed at pickup instead (409).
+    /// </summary>
     [HttpPost]
     [Route("complete")]
     [Authorize(Policy = InventoryPermission.TransactionApprove)]
-    public async Task<IActionResult> CompleteTransaction([FromBody] CompleteTransactionCommand command)
+    public async Task<IActionResult> CompleteTransaction([FromBody] ApproveTransactionRequest request)
     {
-        try
+        if (!User.TryGetUserId(out Guid userId))
         {
-            bool result = await _mediator.Send(command);
-            return Ok(result);
+            return Unauthorized();
         }
-        catch (Exception)
+
+        var result = await _mediator.Send(new ApproveTransactionCommand(request.TransactionId, userId));
+        return result.IsSuccess ? Ok(result.Value) : this.ToProblem(result.Error);
+    }
+
+    /// <summary>Rejects a write-off or opening balance created by hand: nothing moves and a write-off gives its reservation back.</summary>
+    [HttpPost]
+    [Route("reject")]
+    [Authorize(Policy = InventoryPermission.TransactionReject)]
+    public async Task<IActionResult> RejectTransaction([FromBody] RejectTransactionRequest request)
+    {
+        if (!User.TryGetUserId(out Guid userId))
         {
-            return StatusCode(500);
+            return Unauthorized();
         }
+
+        var result = await _mediator.Send(new RejectTransactionCommand(request.TransactionId, userId, request.Reason));
+        return result.IsSuccess ? Ok(result.Value) : this.ToProblem(result.Error);
     }
 
     /// <summary>The customer picks up the goods of a paid sale: the exit is completed and the stock is deducted.</summary>
