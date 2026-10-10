@@ -63,6 +63,22 @@ internal class TransactionStoredModel
     [MaxLength(50)]
     public string? CustomerDocument { get; set; }
 
+    /// <summary>TransactionConcept; null for transactions created before concepts existed.</summary>
+    [Column("concept")]
+    [MaxLength(25)]
+    public string? Concept { get; set; }
+
+    [Column("notes")]
+    [MaxLength(500)]
+    public string? Notes { get; set; }
+
+    /// <summary>Who approved or rejected a transaction created by hand (a user id from the token, not a foreign key).</summary>
+    [Column("reviewedBy")]
+    public Guid? ReviewedBy { get; set; }
+
+    [Column("rejectionReason")]
+    [MaxLength(500)]
+    public string? RejectionReason { get; set; }
 
     public List<TransactionItemStoredModel> Items { get; set; }
 

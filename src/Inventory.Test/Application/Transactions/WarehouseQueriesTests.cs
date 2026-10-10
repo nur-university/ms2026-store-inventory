@@ -19,8 +19,7 @@ public class WarehouseQueriesTests
 
     private Transaction PaidSale()
     {
-        Transaction transaction = new TransactionFactory().CreateExitTransaction(
-            Guid.NewGuid(), [(_itemId, 2)], _orderId, "orders");
+        Transaction transaction = new TransactionFactory().CreateExitTransaction(Guid.NewGuid(), TransactionConcept.Sale, [(_itemId, 2)], sourceId: _orderId, sourceType: "orders");
         transaction.Release("F-00000042", "Ana Perez", "1234567");
         transaction.ClearDomainEvents();
 
@@ -34,7 +33,7 @@ public class WarehouseQueriesTests
     [Fact]
     public void Release_KeepsTheCustomerForTheClerk()
     {
-        Transaction transaction = new TransactionFactory().CreateExitTransaction(Guid.NewGuid(), [(_itemId, 1)], _orderId, "orders");
+        Transaction transaction = new TransactionFactory().CreateExitTransaction(Guid.NewGuid(), TransactionConcept.Sale, [(_itemId, 1)], sourceId: _orderId, sourceType: "orders");
 
         transaction.Release("F-1", "Ana Perez", "1234567");
 
@@ -73,7 +72,7 @@ public class WarehouseQueriesTests
     [Fact]
     public async Task PendingExits_ListsTheSalesToPrepare_WithTheirPaymentStatus()
     {
-        Transaction unpaid = new TransactionFactory().CreateExitTransaction(Guid.NewGuid(), [(_itemId, 1)], Guid.NewGuid(), "orders");
+        Transaction unpaid = new TransactionFactory().CreateExitTransaction(Guid.NewGuid(), TransactionConcept.Sale, [(_itemId, 1)], sourceId: Guid.NewGuid(), sourceType: "orders");
         Transaction paid = PaidSale();
         _transactions.Setup(t => t.GetPendingExitsAsync(0, 20))
             .ReturnsAsync((new List<Transaction> { unpaid, paid }, 2));

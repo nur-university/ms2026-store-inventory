@@ -6,6 +6,7 @@ using Inventory.Application.Transactions.GetTransaccionById;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Inventory.WebApi.Infrastructure;
 using Nur.Store2026.Access.Inventory.Permissions;
 
 namespace Inventory.WebApi.Controllers;
@@ -22,19 +23,26 @@ public class TransactionController : ControllerBase
         _mediator = mediator;
     }
 
+    public record CreateTransactionRequest(string? Concept, List<CreateTransacionItemCommand>? Items, string? Notes);
+
+    /// <summary>
+    /// Creates a transaction by hand: a write-off (<c>Damaged</c>/<c>Lost</c>, a note is mandatory) or an
+    /// <c>OpeningBalance</c>. It is created pending (a write-off reserves the stock) until it is approved or rejected.
+    /// Sales, purchases and returns only come from their own flows (400).
+    /// </summary>
     [HttpPost]
     [Authorize(Policy = InventoryPermission.TransactionCreate)]
-    public async Task<IActionResult> CreateTransaction([FromBody] CreateTransactionCommand command)
+    public async Task<IActionResult> CreateTransaction([FromBody] CreateTransactionRequest request)
     {
-        try
+        if (!User.TryGetUserId(out Guid userId))
         {
-            var id = await _mediator.Send(command);
-            return Ok(id);
+            return Unauthorized();
         }
-        catch (Exception)
-        {
-            return StatusCode(500);
-        }
+
+        var result = await _mediator.Send(new CreateTransactionCommand(userId, request.Concept ?? string.Empty, request.Items ?? [], request.Notes));
+        return result.IsSuccess
+            ? StatusCode(StatusCodes.Status201Created, new { id = result.Value })
+            : this.ToProblem(result.Error);
     }
 
     [HttpPost]

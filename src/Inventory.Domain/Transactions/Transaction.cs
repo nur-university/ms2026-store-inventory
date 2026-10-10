@@ -30,22 +30,73 @@ public class Transaction : AggregateRoot
     /// <summary>The customer of the sale, so the warehouse clerk can check who picks the goods up.</summary>
     public string? CustomerName { get; private set; }
     public string? CustomerDocument { get; private set; }
-    public IReadOnlyCollection<TransactionItem> Items { 
+
+    /// <summary>Why the stock goes in or out. Null only for transactions created before concepts existed.</summary>
+    public TransactionConcept? Concept { get; private set; }
+
+    /// <summary>Free observation; mandatory for write-offs (what happened to the goods).</summary>
+    public string? Notes { get; private set; }
+
+    /// <summary>Who approved or rejected a transaction created by hand.</summary>
+    public Guid? ReviewedBy { get; private set; }
+    public string? RejectionReason { get; private set; }
+
+    /// <summary>Created by hand (a write-off or an opening balance), not by a sale, a purchase or a return.</summary>
+    public bool IsManual => SourceId == null;
+
+    public IReadOnlyCollection<TransactionItem> Items {
         get {
             return _items;
-        } 
+        }
     }
 
-    internal Transaction(Guid creatorId, TransactionType type, Guid? sourceId = null, string? sourceType= null) : base(Guid.NewGuid())
+    internal Transaction(Guid creatorId, TransactionType type, TransactionConcept concept, string? notes = null,
+        Guid? sourceId = null, string? sourceType = null) : base(Guid.NewGuid())
     {
+        notes = string.IsNullOrWhiteSpace(notes) ? null : notes.Trim();
+        EnsureCoherent(type, concept, notes, sourceId, sourceType);
+
         CreatorId = creatorId;
         Status = TransactionStatus.Created;
         CreationDate = DateTime.UtcNow;
         TotalCost = 0;
         _items = [];
         Type = type;
+        Concept = concept;
+        Notes = notes;
         SourceId = sourceId;
         SourceType = sourceType;
+    }
+
+    /// <summary>R10/R11: the concept fixes the direction of the movement and the flow it may come from.</summary>
+    private static void EnsureCoherent(TransactionType type, TransactionConcept concept, string? notes, Guid? sourceId, string? sourceType)
+    {
+        if (!Enum.IsDefined(concept))
+        {
+            throw new DomainException(TransactionErrors.InvalidConcept(concept.ToString()));
+        }
+        if (concept.TypeOf() != type)
+        {
+            throw new DomainException(TransactionErrors.ConceptDoesNotMatchType(concept, type));
+        }
+
+        string? expectedSource = concept.SourceTypeOf();
+        bool sourceMatches = expectedSource == null
+            ? sourceId == null && sourceType == null
+            : sourceId != null && sourceType == expectedSource;
+        if (!sourceMatches)
+        {
+            throw new DomainException(TransactionErrors.ConceptDoesNotMatchSource(concept, sourceType));
+        }
+
+        if (concept.RequiresNotes() && notes == null)
+        {
+            throw new DomainException(TransactionErrors.NotesRequired(concept));
+        }
+        if (notes?.Length > TransactionConceptRules.MaxNotesLength)
+        {
+            throw new DomainException(TransactionErrors.NotesTooLong());
+        }
     }
 
     public void AddItem(Guid itemId, int quantity, decimal unitaryCost)
@@ -134,6 +185,43 @@ public class Transaction : AggregateRoot
         foreach (var item in _items)
         {
             AddDomainEvent(new TransactionItemUnreserved(item.ItemId, item.Quantity, Id));
+        }
+    }
+
+    /// <summary>
+    /// Approves a transaction created by hand: a write-off leaves the warehouse, an opening balance enters it.
+    /// Transactions of a sale are closed when the customer picks the goods up, not here.
+    /// </summary>
+    public void Approve(Guid reviewerId)
+    {
+        EnsurePendingManual();
+        ReviewedBy = reviewerId;
+        Complete();
+    }
+
+    /// <summary>Rejects a transaction created by hand: nothing moves, and the stock a write-off reserved is given back.</summary>
+    public void Reject(Guid reviewerId, string? reason)
+    {
+        EnsurePendingManual();
+        reason = string.IsNullOrWhiteSpace(reason) ? null : reason.Trim();
+        if (reason?.Length > TransactionConceptRules.MaxNotesLength)
+        {
+            throw new DomainException(TransactionErrors.NotesTooLong());
+        }
+        ReviewedBy = reviewerId;
+        RejectionReason = reason;
+        Cancel();
+    }
+
+    private void EnsurePendingManual()
+    {
+        if (!IsManual)
+        {
+            throw new DomainException(TransactionErrors.NotManual(Id));
+        }
+        if (Status != TransactionStatus.Created)
+        {
+            throw new DomainException(TransactionErrors.AlreadyReviewed(Id, Status));
         }
     }
 

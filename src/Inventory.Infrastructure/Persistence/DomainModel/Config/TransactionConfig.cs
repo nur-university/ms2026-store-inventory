@@ -85,11 +85,28 @@ namespace Inventory.Infrastructure.Persistence.DomainModel.Config
                 .HasColumnName("customerDocument")
                 .HasMaxLength(50);
 
+            builder.Property(x => x.Concept)
+                .HasColumnName("concept")
+                .HasConversion<string>()
+                .HasMaxLength(25);
+
+            builder.Property(x => x.Notes)
+                .HasColumnName("notes")
+                .HasMaxLength(TransactionConceptRules.MaxNotesLength);
+
+            builder.Property(x => x.ReviewedBy)
+                .HasColumnName("reviewedBy");
+
+            builder.Property(x => x.RejectionReason)
+                .HasColumnName("rejectionReason")
+                .HasMaxLength(TransactionConceptRules.MaxNotesLength);
+
             builder.HasMany(typeof(TransactionItem), "_items");
 
             builder.Ignore("_domainEvents");
             builder.Ignore(x => x.DomainEvents);
             builder.Ignore(x => x.Items);
+            builder.Ignore(x => x.IsManual);
         }
 
         public void Configure(EntityTypeBuilder<TransactionItem> builder)

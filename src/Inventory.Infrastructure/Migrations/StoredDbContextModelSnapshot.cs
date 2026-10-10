@@ -127,6 +127,11 @@ namespace Inventory.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("completedDate");
 
+                    b.Property<string>("Concept")
+                        .HasMaxLength(25)
+                        .HasColumnType("character varying(25)")
+                        .HasColumnName("concept");
+
                     b.Property<DateTime>("CreationDate")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("creationDate");
@@ -146,9 +151,23 @@ namespace Inventory.Infrastructure.Migrations
                         .HasColumnType("character varying(20)")
                         .HasColumnName("invoiceNumber");
 
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("notes");
+
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("rejectionReason");
+
                     b.Property<DateTime?>("ReleasedOn")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("releasedOn");
+
+                    b.Property<Guid?>("ReviewedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("reviewedBy");
 
                     b.Property<Guid?>("SourceId")
                         .HasColumnType("uuid")

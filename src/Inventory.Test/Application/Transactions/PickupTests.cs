@@ -19,8 +19,7 @@ public class PickupTests
 
     private Transaction ReservedForTheSale()
     {
-        Transaction transaction = new TransactionFactory().CreateExitTransaction(
-            Guid.NewGuid(), [(Guid.NewGuid(), 2)], _orderId, "orders");
+        Transaction transaction = new TransactionFactory().CreateExitTransaction(Guid.NewGuid(), TransactionConcept.Sale, [(Guid.NewGuid(), 2)], sourceId: _orderId, sourceType: "orders");
         transaction.ClearDomainEvents();
         _transactions.Setup(t => t.GetBySourceAsync(_orderId, "orders")).ReturnsAsync(transaction);
         return transaction;
@@ -48,7 +47,7 @@ public class PickupTests
     [Fact]
     public void Release_OfATransactionThatDoesNotComeFromASale_IsRejected()
     {
-        Transaction entry = new TransactionFactory().CreateEntryTransaction(Guid.NewGuid(), [(Guid.NewGuid(), 1, 10m)]);
+        Transaction entry = new TransactionFactory().CreateEntryTransaction(Guid.NewGuid(), TransactionConcept.OpeningBalance, [(Guid.NewGuid(), 1, 10m)]);
 
         Assert.Throws<InvalidOperationException>(() => entry.Release("F-1"));
     }
@@ -82,7 +81,7 @@ public class PickupTests
     [Fact]
     public void Complete_ATransactionCreatedByHand_NeedsNoPayment_AndIsNotADelivery()
     {
-        Transaction entry = new TransactionFactory().CreateEntryTransaction(Guid.NewGuid(), [(Guid.NewGuid(), 1, 10m)]);
+        Transaction entry = new TransactionFactory().CreateEntryTransaction(Guid.NewGuid(), TransactionConcept.OpeningBalance, [(Guid.NewGuid(), 1, 10m)]);
         entry.ClearDomainEvents();
 
         entry.Complete();

@@ -38,7 +38,7 @@ public class CreateTransactionHandlerTests
     public async Task OrderStarted_WhenTheOrderAlreadyHasAReservation_IsIgnored()
     {
         _transactions.Setup(t => t.GetBySourceAsync(_message.OrderId, "orders"))
-            .ReturnsAsync(new TransactionFactory().CreateExitTransaction(Guid.NewGuid(), [(Guid.NewGuid(), 1)], _message.OrderId, "orders"));
+            .ReturnsAsync(new TransactionFactory().CreateExitTransaction(Guid.NewGuid(), TransactionConcept.Sale, [(Guid.NewGuid(), 1)], sourceId: _message.OrderId, sourceType: "orders"));
 
         await _handler.HandleAsync(_message, CancellationToken.None);
 

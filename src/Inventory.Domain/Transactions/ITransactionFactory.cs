@@ -1,13 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace Inventory.Domain.Transactions;
 
 public interface ITransactionFactory
 {
-    Transaction CreateEntryTransaction(Guid userCreatorId, List<(Guid itemId, int quantity, decimal unitaryCost)> items, Guid? sourceId = null, string? sourceType = null);
-    Transaction CreateExitTransaction(Guid userCreatorId, List<(Guid itemId, int quantity)> items, Guid? sourceId = null, string? sourceType = null) ;
+    /// <summary>A pending entry (purchase, return or opening balance). The stock goes up when it is completed.</summary>
+    Transaction CreateEntryTransaction(Guid userCreatorId, TransactionConcept concept, List<(Guid itemId, int quantity, decimal unitaryCost)> items,
+        string? notes = null, Guid? sourceId = null, string? sourceType = null);
+
+    /// <summary>A pending exit (sale or write-off). It reserves the stock; the stock goes down when it is completed.</summary>
+    Transaction CreateExitTransaction(Guid userCreatorId, TransactionConcept concept, List<(Guid itemId, int quantity)> items,
+        string? notes = null, Guid? sourceId = null, string? sourceType = null);
 }

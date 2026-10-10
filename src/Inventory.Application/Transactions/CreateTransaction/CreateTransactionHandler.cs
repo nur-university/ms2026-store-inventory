@@ -14,7 +14,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Inventory.Application.Transactions.CreateTransaction;
 
-public class CreateTransactionHandler : IRequestHandler<CreateTransactionCommand, Guid>,
+public class CreateTransactionHandler : IRequestHandler<CreateTransactionCommand, Result<Guid>>,
                                         IIntegrationMessageConsumer<OrderStarted>
 {
     private readonly ITransactionFactory _transactionFactory;
@@ -43,47 +43,93 @@ public class CreateTransactionHandler : IRequestHandler<CreateTransactionCommand
         _outboxService = outboxService;
     }
 
-    public async Task<Guid> Handle(CreateTransactionCommand request, CancellationToken cancellationToken) {
+    /// <summary>A write-off or an opening balance created by hand; it stays pending until it is approved or rejected.</summary>
+    public async Task<Result<Guid>> Handle(CreateTransactionCommand request, CancellationToken cancellationToken) {
 
-        var transaction = request.Type switch
+        Result<TransactionConcept> concept = ParseConcept(request.Concept);
+        if (concept.IsFailure)
         {
-            "Entry" => _transactionFactory.CreateEntryTransaction(
-                request.UserCreatorId,
-                [.. request.Items.Select(i => (i.ItemId, i.Quantity, i.UnitaryCost))]
+            return Result.Failure<Guid>(concept.Error);
+        }
+        if (!concept.Value.CanBeCreatedManually())
+        {
+            return Result.Failure<Guid>(TransactionErrors.ConceptNotManual(concept.Value));
+        }
 
-            ),
-            "Exit" => _transactionFactory.CreateExitTransaction(
-                request.UserCreatorId,
-                [.. request.Items.Select(i => (i.ItemId, i.Quantity))],
-                request.SourceId,
-                request.SourceType
-            ),
-            _ => throw new TransactionCreationException("Invalid transaction type")
-        };
+        bool isEntry = concept.Value.TypeOf() == TransactionType.Entry;
+        Error? invalidItems = await ValidateItemsAsync(request.Items, isEntry);
+        if (invalidItems != null)
+        {
+            return Result.Failure<Guid>(invalidItems);
+        }
 
-        //foreach (var item in request.Items)
-        //{
-        //    var storeItem = await _itemRepository.GetByIdAsync(item.ItemId, true);
-        //    if (storeItem == null)
-        //    {
-        //        throw new TransactionCreationException("Item not found");
-        //    }
+        Guid creatorId = await ResolveCreatorAsync(request.UserCreatorId);
 
-        //    transaction.AddItem(item.ItemId, item.Quantity, item.UnitaryCost);
-        //}
+        try
+        {
+            Transaction transaction = isEntry
+                ? _transactionFactory.CreateEntryTransaction(creatorId, concept.Value,
+                    [.. request.Items.Select(i => (i.ItemId, i.Quantity, i.UnitaryCost))], request.Notes)
+                : _transactionFactory.CreateExitTransaction(creatorId, concept.Value,
+                    [.. request.Items.Select(i => (i.ItemId, i.Quantity))], request.Notes);
 
-        await _transactionRepository.AddAsync(transaction);
+            await _transactionRepository.AddAsync(transaction);
 
-        await _unitOfWork.CommitAsync(cancellationToken);
+            // A write-off reserves the stock now (not enough available stock is a business error).
+            await _unitOfWork.CommitAsync(cancellationToken);
 
-        return transaction.Id;
+            return transaction.Id;
+        }
+        catch (DomainException ex)
+        {
+            return Result.Failure<Guid>(ex.Error);
+        }
+    }
+
+    private static Result<TransactionConcept> ParseConcept(string? value)
+    {
+        // Names only: Enum.TryParse would also accept numbers such as "3".
+        if (string.IsNullOrWhiteSpace(value) || !value.Trim().All(char.IsLetter)
+            || !Enum.TryParse(value.Trim(), ignoreCase: true, out TransactionConcept concept))
+        {
+            return Result.Failure<TransactionConcept>(TransactionErrors.InvalidConcept(value));
+        }
+        return concept;
+    }
+
+    private async Task<Error?> ValidateItemsAsync(ICollection<CreateTransacionItemCommand>? items, bool isEntry)
+    {
+        if (items == null || items.Count == 0)
+        {
+            return TransactionErrors.NoItems();
+        }
+
+        HashSet<Guid> seen = [];
+        foreach (CreateTransacionItemCommand item in items)
+        {
+            if (!seen.Add(item.ItemId))
+            {
+                return TransactionErrors.DuplicatedItem(item.ItemId);
+            }
+            if (item.Quantity <= 0)
+            {
+                return TransactionErrors.InvalidQuantity(item.ItemId);
+            }
+            // An entry sets the cost the goods are valued at; an exit leaves at the average cost, so its cost is ignored.
+            if (isEntry && item.UnitaryCost <= 0)
+            {
+                return TransactionErrors.InvalidCost(item.ItemId);
+            }
+        }
+
+        ICollection<Item> known = await _itemRepository.GetItemsFromId(seen, readOnly: true);
+        Guid? unknown = seen.Cast<Guid?>().FirstOrDefault(id => known.All(k => k.Id != id));
+        return unknown.HasValue ? TransactionErrors.UnknownItem(unknown.Value) : null;
     }
 
     public async Task HandleAsync(OrderStarted message, CancellationToken cancellationToken) {
-        List<CreateTransacionItemCommand> items = message.Items.Select(i => new CreateTransacionItemCommand(i.ProductId, i.Quantity, 0)).ToList();
-
         // A duplicated OrderStarted must not reserve the stock twice.
-        if (await _transactionRepository.GetBySourceAsync(message.OrderId, "orders") != null)
+        if (await _transactionRepository.GetBySourceAsync(message.OrderId, TransactionSources.Orders) != null)
         {
             _logger.LogInformation("Stock for order {OrderId} was already reserved; ignoring OrderStarted", message.OrderId);
             return;
@@ -96,13 +142,15 @@ public class CreateTransactionHandler : IRequestHandler<CreateTransactionCommand
 
             Guid creatorId = await ResolveCreatorAsync(message.UserId);
 
-            CreateTransactionCommand command = new(creatorId,
-                "Exit",
-                items,
-                message.OrderId,
-                "orders");
+            Transaction transaction = _transactionFactory.CreateExitTransaction(creatorId,
+                TransactionConcept.Sale,
+                [.. message.Items.Select(i => (i.ProductId, i.Quantity))],
+                sourceId: message.OrderId,
+                sourceType: TransactionSources.Orders);
 
-            await Handle(command, cancellationToken);
+            await _transactionRepository.AddAsync(transaction);
+
+            await _unitOfWork.CommitAsync(cancellationToken);
         }
         catch (DomainException ex)
         {
