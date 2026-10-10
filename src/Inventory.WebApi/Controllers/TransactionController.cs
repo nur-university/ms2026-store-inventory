@@ -3,6 +3,8 @@ using Inventory.Application.Transactions.DeliverOrder;
 using Joseco.DDD.Core.Results;
 using Inventory.Application.Transactions.CreateTransaction;
 using Inventory.Application.Transactions.GetTransaccionById;
+using Inventory.Application.Transactions.GetTransactions;
+using Inventory.Domain.Transactions;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -146,18 +148,27 @@ public class TransactionController : ControllerBase
         return StatusCode(status, new ProblemDetails { Status = status, Title = error.Code, Detail = error.Description });
     }
 
+    /// <summary>
+    /// Transactions, newest first, filtered by type (Entry/Exit), concept, status, source type (orders, purchasing, ...)
+    /// and creation dates (a date without time includes the whole day).
+    /// </summary>
     [HttpGet]
-    [Route("{id}")]
+    [Authorize(Policy = InventoryPermission.TransactionRead)]
+    public async Task<IActionResult> GetTransactions([FromQuery] string? type, [FromQuery] string? concept, [FromQuery] string? status,
+        [FromQuery] string? sourceType, [FromQuery] DateTime? from, [FromQuery] DateTime? to,
+        [FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+    {
+        var result = await _mediator.Send(new GetTransactionsQuery(type, concept, status, sourceType, from, to, page, pageSize));
+        return result.IsSuccess ? Ok(result.Value) : this.ToProblem(result.Error);
+    }
+
+    /// <summary>A transaction with its concept, notes, review and lines.</summary>
+    [HttpGet]
+    [Route("{id:guid}")]
+    [Authorize(Policy = InventoryPermission.TransactionRead)]
     public async Task<IActionResult> GetTransaction([FromRoute] Guid id)
     {
-        try
-        {
-            var result = await _mediator.Send(new GetTransaccionByIdQuery(id));
-            return Ok(result);
-        }
-        catch (Exception)
-        {
-            return StatusCode(500);
-        }
+        TransactionDto? transaction = await _mediator.Send(new GetTransaccionByIdQuery(id));
+        return transaction != null ? Ok(transaction) : this.ToProblem(TransactionErrors.NotFound(id));
     }
 }

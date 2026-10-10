@@ -1,10 +1,6 @@
-﻿using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using MediatR;
 
 namespace Inventory.Application.Transactions.GetTransaccionById;
 
-public record GetTransaccionByIdQuery(Guid TransactionId) : IRequest<TransactionDto>;
+/// <summary>Null when the transaction does not exist.</summary>
+public record GetTransaccionByIdQuery(Guid TransactionId) : IRequest<TransactionDto?>;

@@ -1,16 +1,11 @@
-﻿using Inventory.Application.Transactions.GetTransaccionById;
+using Inventory.Application.Transactions.GetTransaccionById;
 using Inventory.Infrastructure.Persistence.StoredModel;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Inventory.Infrastructure.Queries.Transaction;
 
-internal class GetTransactionByIdHandler : IRequestHandler<GetTransaccionByIdQuery, TransactionDto>
+internal class GetTransactionByIdHandler : IRequestHandler<GetTransaccionByIdQuery, TransactionDto?>
 {
     private readonly StoredDbContext _dbContext;
 
@@ -23,22 +18,41 @@ internal class GetTransactionByIdHandler : IRequestHandler<GetTransaccionByIdQue
     {
         if (request.TransactionId == Guid.Empty)
         {
-            throw new ArgumentNullException(nameof(request.TransactionId));
+            return null;
         }
 
-        var transaction = await _dbContext.Transaction.AsNoTracking()
+        return await _dbContext.Transaction.AsNoTracking()
             .Where(t => t.Id == request.TransactionId)
             .Select(t => new TransactionDto()
             {
                 Id = t.Id,
-                CreationDate = t.CreationDate,
-                CompletedDate = t.CompletedDate ?? default,
-                CancelDate = t.CancelDate ?? default,
                 Type = t.TransactionType,
-                TotalCost = t.TotalCost
+                Concept = t.Concept,
+                Status = t.Status,
+                CreationDate = t.CreationDate,
+                CompletedDate = t.CompletedDate,
+                CancelDate = t.CancelDate,
+                CreatorId = t.UserCreatorId,
+                CreatorName = t.UserCreator.FullName,
+                SourceId = t.SourceId,
+                SourceType = t.SourceType,
+                Notes = t.Notes,
+                ReviewedBy = t.ReviewedBy,
+                RejectionReason = t.RejectionReason,
+                ReleasedOn = t.ReleasedOn,
+                InvoiceNumber = t.InvoiceNumber,
+                CustomerName = t.CustomerName,
+                CustomerDocument = t.CustomerDocument,
+                TotalCost = t.TotalCost,
+                Lines = t.Items.Select(i => new TransactionLineDto
+                {
+                    ItemId = i.ItemId,
+                    ItemName = i.Item.ItemName,
+                    Quantity = i.Quantity,
+                    UnitaryCost = i.UnitaryCost,
+                    SubTotal = i.SubTotal
+                }).ToList()
             })
             .FirstOrDefaultAsync(cancellationToken);
-
-        return transaction;
     }
 }

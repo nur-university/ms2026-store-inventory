@@ -61,4 +61,8 @@
     <Folder Include="Migrations\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="Inventory.Test" />
+  </ItemGroup>
+
 </Project>
