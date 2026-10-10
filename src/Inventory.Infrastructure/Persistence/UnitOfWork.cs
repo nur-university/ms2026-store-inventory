@@ -5,6 +5,7 @@ using System.Collections.Immutable;
 using Joseco.Outbox.EFCore.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Joseco.Outbox.Contracts.Model;
+using Inventory.Infrastructure.Observability;
 
 namespace Inventory.Infrastructure.Persistence
 {
@@ -56,7 +57,9 @@ namespace Inventory.Infrastructure.Persistence
                     }
                 }
 
+                var businessTransitions = InventoryMetrics.Capture(_dbContext.ChangeTracker);
                 await _dbContext.SaveChangesAsync(cancellationToken);
+                InventoryMetrics.Record(businessTransitions);
             }
             catch
             {
