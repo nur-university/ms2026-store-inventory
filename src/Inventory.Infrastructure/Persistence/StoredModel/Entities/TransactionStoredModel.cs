@@ -55,6 +55,14 @@ internal class TransactionStoredModel
     [MaxLength(20)]
     public string? InvoiceNumber { get; set; }
 
+    [Column("customerName")]
+    [MaxLength(200)]
+    public string? CustomerName { get; set; }
+
+    [Column("customerDocument")]
+    [MaxLength(50)]
+    public string? CustomerDocument { get; set; }
+
 
     public List<TransactionItemStoredModel> Items { get; set; }
 

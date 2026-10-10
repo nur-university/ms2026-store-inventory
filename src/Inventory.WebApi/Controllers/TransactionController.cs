@@ -75,6 +75,48 @@ public class TransactionController : ControllerBase
         return StatusCode(status, new ProblemDetails { Status = status, Title = result.Error.Code, Detail = result.Error.Description });
     }
 
+    /// <summary>The sales the warehouse has to prepare and hand over (oldest first), and whether each one is already paid.</summary>
+    [HttpGet]
+    [Route("pending-exits")]
+    [Authorize(Policy = InventoryPermission.TransactionDeliver)]
+    public async Task<IActionResult> GetPendingExits([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+    {
+        var result = await _mediator.Send(new GetPendingExitsQuery(page, pageSize));
+        return result.IsSuccess ? Ok(result.Value) : ProblemFor(result.Error);
+    }
+
+    /// <summary>What the customer is entitled to pick up, looked up by the number of the invoice they show.</summary>
+    [HttpGet]
+    [Route("invoices/{invoiceNumber}")]
+    [Authorize(Policy = InventoryPermission.TransactionDeliver)]
+    public async Task<IActionResult> GetByInvoice([FromRoute] string invoiceNumber)
+    {
+        var result = await _mediator.Send(new GetExitByInvoiceQuery(invoiceNumber));
+        return result.IsSuccess ? Ok(result.Value) : ProblemFor(result.Error);
+    }
+
+    /// <summary>The customer picks the goods up, identified by the invoice. Same effect as delivering by order.</summary>
+    [HttpPost]
+    [Route("invoices/{invoiceNumber}/deliver")]
+    [Authorize(Policy = InventoryPermission.TransactionDeliver)]
+    public async Task<IActionResult> DeliverByInvoice([FromRoute] string invoiceNumber)
+    {
+        var result = await _mediator.Send(new DeliverInvoiceCommand(invoiceNumber));
+        return result.IsSuccess ? Ok(result.Value) : ProblemFor(result.Error);
+    }
+
+    private IActionResult ProblemFor(Error error)
+    {
+        int status = error.Type switch
+        {
+            ErrorType.NotFound => StatusCodes.Status404NotFound,
+            ErrorType.Conflict => StatusCodes.Status409Conflict,
+            ErrorType.Validation => StatusCodes.Status400BadRequest,
+            _ => StatusCodes.Status500InternalServerError
+        };
+        return StatusCode(status, new ProblemDetails { Status = status, Title = error.Code, Detail = error.Description });
+    }
+
     [HttpGet]
     [Route("{id}")]
     public async Task<IActionResult> GetTransaction([FromRoute] Guid id)

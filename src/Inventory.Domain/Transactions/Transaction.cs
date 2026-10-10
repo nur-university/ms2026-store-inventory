@@ -26,6 +26,10 @@ public class Transaction : AggregateRoot
 
     /// <summary>Invoice of the paid sale, shown to the warehouse clerk when the customer picks the goods up.</summary>
     public string? InvoiceNumber { get; private set; }
+
+    /// <summary>The customer of the sale, so the warehouse clerk can check who picks the goods up.</summary>
+    public string? CustomerName { get; private set; }
+    public string? CustomerDocument { get; private set; }
     public IReadOnlyCollection<TransactionItem> Items { 
         get {
             return _items;
@@ -62,7 +66,7 @@ public class Transaction : AggregateRoot
     }
 
     /// <summary>Marks the reservation of a sale as paid, so the warehouse may hand the goods over. Idempotent.</summary>
-    public void Release(string? invoiceNumber)
+    public void Release(string? invoiceNumber, string? customerName = null, string? customerDocument = null)
     {
         if (Type != TransactionType.Exit || SourceId == null)
         {
@@ -79,6 +83,8 @@ public class Transaction : AggregateRoot
 
         ReleasedOn = DateTime.UtcNow;
         InvoiceNumber = invoiceNumber;
+        CustomerName = customerName;
+        CustomerDocument = customerDocument;
     }
 
     public void Complete()

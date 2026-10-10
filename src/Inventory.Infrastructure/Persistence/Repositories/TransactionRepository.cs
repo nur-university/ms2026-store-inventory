@@ -42,6 +42,23 @@ namespace Inventory.Infrastructure.Persistence.Repositories
             }
         }
 
+        public Task<Transaction?> GetByInvoiceAsync(string invoiceNumber)
+        {
+            return _dbContext.Transaction.Include("_items")
+                .FirstOrDefaultAsync(t => t.InvoiceNumber == invoiceNumber);
+        }
+
+        public async Task<(IReadOnlyList<Transaction> Transactions, int Total)> GetPendingExitsAsync(int skip, int take)
+        {
+            IQueryable<Transaction> pending = _dbContext.Transaction.AsNoTracking()
+                .Where(t => t.Type == TransactionType.Exit && t.Status == TransactionStatus.Created && t.SourceId != null);
+
+            int total = await pending.CountAsync();
+            List<Transaction> page = await pending.Include("_items").OrderBy(t => t.CreationDate).Skip(skip).Take(take).ToListAsync();
+
+            return (page, total);
+        }
+
         public Task<Transaction?> GetBySourceAsync(Guid sourceId, string sourceType)
         {
             return _dbContext.Transaction.Include("_items")

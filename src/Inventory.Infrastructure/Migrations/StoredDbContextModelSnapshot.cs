@@ -131,6 +131,16 @@ namespace Inventory.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("creationDate");
 
+                    b.Property<string>("CustomerDocument")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("customerDocument");
+
+                    b.Property<string>("CustomerName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("customerName");
+
                     b.Property<string>("InvoiceNumber")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)")

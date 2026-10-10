@@ -38,7 +38,7 @@ public class ReleaseTransactionWhenOrderPaid : IIntegrationMessageConsumer<Order
             return; // already delivered, or the reservation was released
         }
 
-        transaction.Release(message.InvoiceNumber);
+        transaction.Release(message.InvoiceNumber, message.CustomerName, message.CustomerDocument);
 
         await _unitOfWork.CommitAsync(cancellationToken);
     }

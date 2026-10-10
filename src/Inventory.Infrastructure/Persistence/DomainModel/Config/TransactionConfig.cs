@@ -77,6 +77,14 @@ namespace Inventory.Infrastructure.Persistence.DomainModel.Config
                 .HasColumnName("invoiceNumber")
                 .HasMaxLength(20);
 
+            builder.Property(x => x.CustomerName)
+                .HasColumnName("customerName")
+                .HasMaxLength(200);
+
+            builder.Property(x => x.CustomerDocument)
+                .HasColumnName("customerDocument")
+                .HasMaxLength(50);
+
             builder.HasMany(typeof(TransactionItem), "_items");
 
             builder.Ignore("_domainEvents");
