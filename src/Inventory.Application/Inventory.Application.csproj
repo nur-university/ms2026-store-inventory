@@ -9,7 +9,7 @@
   <ItemGroup>
     <PackageReference Include="MediatR" Version="12.4.1" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.4" />
-    <PackageReference Include="Nur.Store2025.Integration" Version="1.0.1" Condition="!Exists('$(MSBuildThisFileDirectory)..\..\..\..\SharedKernel\Nur.Store2026.Integration\src\Nur.Store2026.Integration\Nur.Store2026.Integration.csproj')" />
+    <PackageReference Include="Nur.Store2026.Integration" Version="1.0.0" Condition="!Exists('$(MSBuildThisFileDirectory)..\..\..\..\SharedKernel\Nur.Store2026.Integration\src\Nur.Store2026.Integration\Nur.Store2026.Integration.csproj')" />
     <ProjectReference Include="$(MSBuildThisFileDirectory)..\..\..\..\SharedKernel\Nur.Store2026.Integration\src\Nur.Store2026.Integration\Nur.Store2026.Integration.csproj" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\..\SharedKernel\Nur.Store2026.Integration\src\Nur.Store2026.Integration\Nur.Store2026.Integration.csproj')" />
     <PackageReference Include="Serilog" Version="4.2.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.4" />
