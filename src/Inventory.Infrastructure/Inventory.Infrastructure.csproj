@@ -16,9 +16,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Joseco.Communication.External.RabbitMQ" Version="1.0.2" Condition="!Exists('$(MSBuildThisFileDirectory)..\..\..\..\Utils\Joseco.Communication\Joseco.Communication.External.RabbitMQ\Joseco.Communication.External.RabbitMQ.csproj')" />
+    <PackageReference Include="Joseco.Communication.External.RabbitMQ" Version="1.1.0" Condition="!Exists('$(MSBuildThisFileDirectory)..\..\..\..\Utils\Joseco.Communication\Joseco.Communication.External.RabbitMQ\Joseco.Communication.External.RabbitMQ.csproj')" />
     <ProjectReference Include="$(MSBuildThisFileDirectory)..\..\..\..\Utils\Joseco.Communication\Joseco.Communication.External.RabbitMQ\Joseco.Communication.External.RabbitMQ.csproj" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\..\Utils\Joseco.Communication\Joseco.Communication.External.RabbitMQ\Joseco.Communication.External.RabbitMQ.csproj')" />
-    <PackageReference Include="Joseco.Outbox.EFCore" Version="1.0.4" Condition="!Exists('$(MSBuildThisFileDirectory)..\..\..\..\Utils\Joseco.Outbox\Joseco.Outbox.EFCore\Joseco.Outbox.EFCore.csproj')" />
+    <PackageReference Include="Joseco.Outbox.EFCore" Version="1.1.0" Condition="!Exists('$(MSBuildThisFileDirectory)..\..\..\..\Utils\Joseco.Outbox\Joseco.Outbox.EFCore\Joseco.Outbox.EFCore.csproj')" />
     <ProjectReference Include="$(MSBuildThisFileDirectory)..\..\..\..\Utils\Joseco.Outbox\Joseco.Outbox.EFCore\Joseco.Outbox.EFCore.csproj" Condition="Exists('$(MSBuildThisFileDirectory)..\..\..\..\Utils\Joseco.Outbox\Joseco.Outbox.EFCore\Joseco.Outbox.EFCore.csproj')" />
     <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="9.0.3" />
     <PackageReference Include="AspNetCore.HealthChecks.NpgSql" Version="9.0.0" />
